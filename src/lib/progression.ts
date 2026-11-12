@@ -138,7 +138,7 @@ export function suggest(ex: ExercisePlan, history: HistoryEntry[]): Suggestion {
       return { weight: lastWeight, action: 'hold', message: `Reps were there but RPE was above ${ex.targetRpe} — repeat the weight.`, lastWeight };
     }
     const w = clean(lastWeight + ex.increment);
-    return { weight: w, action: 'increase', message: `Hit ${range} on all sets — add ${ex.increment} kg.`, lastWeight };
+    return { weight: w, action: 'increase', message: `Hit ${range} on all sets — add ${ex.increment} ${ex.weightUnit ?? 'kg'}.`, lastWeight };
   }
 
   const prev = normal[1];

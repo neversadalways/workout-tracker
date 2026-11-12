@@ -1,6 +1,11 @@
 import { useRef } from 'react';
 import { useStore } from '../store';
-import type { Settings } from '../types';
+import type { ExercisePlan, Settings, WeightUnit } from '../types';
+import { PLAN } from '../data/plan';
+import { unitFor } from '../lib/units';
+
+/** Unique weighted exercises across the plan. */
+const exerciseList: ExercisePlan[] = [...new Map(PLAN.flatMap((d) => d.exercises).filter((e) => !e.noWeight).map((e) => [e.id, e])).values()];
 import { defaultData, exportData, parseImport } from '../lib/storage';
 import { endDeload, startDeload } from '../lib/deload';
 import { formatDate, startOfWeek, todayStr } from '../lib/dates';
@@ -59,13 +64,31 @@ export function SettingsScreen() {
       </section>
 
       <section className="card">
-        <h3>Units</h3>
-        <label className="field">
-          <span>Weight unit</span>
-          <select value={s.unit} onChange={() => set({ unit: 'kg' })}>
-            <option value="kg">Kilograms (kg)</option>
-          </select>
-        </label>
+        <h3>Exercise units</h3>
+        <p className="muted small">
+          Body weight and totals use kg. Switch individual exercises to lb (e.g. machines labelled in pounds). Past sessions are converted automatically for
+          suggestions and charts. You can also tap the unit header inside a workout.
+        </p>
+        {exerciseList.map((ex) => {
+          const u = unitFor(ex, s);
+          return (
+            <div key={ex.id} className="detail-row unit-row">
+              <span>{ex.name}</span>
+              <div className="mini-seg" role="group" aria-label={`${ex.name} unit`}>
+                {(['kg', 'lb'] as WeightUnit[]).map((opt) => (
+                  <button
+                    key={opt}
+                    className={u === opt ? 'active' : ''}
+                    aria-pressed={u === opt}
+                    onClick={() => set({ exerciseUnits: { ...s.exerciseUnits, [ex.id]: opt } })}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       <section className="card">

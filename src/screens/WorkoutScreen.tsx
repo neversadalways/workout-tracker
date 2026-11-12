@@ -1,7 +1,8 @@
 import { useStore } from '../store';
-import type { ExerciseLog, ExercisePlan, WorkoutLog } from '../types';
+import type { ExerciseLog, ExercisePlan, WeightUnit, WorkoutLog } from '../types';
 import { findExercise, getDay } from '../lib/schedule';
-import { exerciseHistory, suggest, type HistoryEntry } from '../lib/progression';
+import { exerciseHistory, type HistoryEntry } from '../lib/progression';
+import { convertWeight, planInUnit, suggestIn } from '../lib/units';
 import { deloadWeight } from '../lib/deload';
 import { formatDate } from '../lib/dates';
 import { NumInput } from '../components/NumInput';
@@ -59,6 +60,29 @@ export function WorkoutScreen({ onClose }: { onClose: () => void }) {
             deload={w.deload}
             history={exerciseHistory(data.workouts, ex.id)}
             onChange={(fn) => setExercise(i, fn)}
+            onUnitChange={(unit) =>
+              update((d) => {
+                if (!d.active) return d;
+                const exercises = d.active.exercises.map((e, j) => {
+                  if (j !== i) return e;
+                  // Fresh suggestion in the new unit (rounded to that unit's plate steps).
+                  const s = suggestIn(ex, exerciseHistory(d.workouts, ex.id), unit);
+                  const sw = d.active!.deload ? deloadWeight(s.weight, planInUnit(ex, unit).increment) : s.weight;
+                  const from = e.weightUnit ?? 'kg';
+                  const sets = e.sets.map((set) => {
+                    // Untouched pre-filled sets take the new suggestion; anything you typed or finished is converted.
+                    if (!set.done && set.weight === e.suggestedWeight) return { ...set, weight: sw };
+                    return { ...set, weight: set.weight == null ? null : convertWeight(set.weight, from, unit, 0.5) };
+                  });
+                  return { ...e, sets, weightUnit: unit, suggestedWeight: sw };
+                });
+                return {
+                  ...d,
+                  active: { ...d.active, exercises },
+                  settings: { ...d.settings, exerciseUnits: { ...d.settings.exerciseUnits, [ex.id]: unit } },
+                };
+              })
+            }
             onSetDone={() => {
               const rest = ex.restSec ?? (ex.main ? data.settings.restMainSec : data.settings.restAccessorySec);
               timer.start(rest, ex.name);
@@ -96,12 +120,14 @@ interface CardProps {
   history: HistoryEntry[];
   deload: boolean;
   onChange: (fn: (e: ExerciseLog) => ExerciseLog) => void;
+  onUnitChange: (unit: WeightUnit) => void;
   onSetDone: () => void;
 }
 
-function ExerciseCard({ ex, log, history, deload, onChange, onSetDone }: CardProps) {
-  const s = suggest(ex, history);
-  const suggested = deload ? deloadWeight(s.weight, ex.increment) : s.weight;
+function ExerciseCard({ ex, log, history, deload, onChange, onUnitChange, onSetDone }: CardProps) {
+  const unit: WeightUnit = log.weightUnit ?? 'kg';
+  const s = suggestIn(ex, history, unit);
+  const suggested = deload ? deloadWeight(s.weight, planInUnit(ex, unit).increment) : s.weight;
   const last = history[0];
   const allDone = log.sets.length > 0 && log.sets.every((x) => x.done);
   const isSec = ex.unit === 'sec';
@@ -154,7 +180,7 @@ function ExerciseCard({ ex, log, history, deload, onChange, onSetDone }: CardPro
             <div>
               <span className="muted small">Suggested</span>
               <div className="sugg-weight">
-                {ACTION_ICON[s.action]} {kg(suggested)}
+                {ACTION_ICON[s.action]} {kg(suggested, unit)}
               </div>
             </div>
             {suggested != null && firstWeight !== suggested && (
@@ -176,7 +202,15 @@ function ExerciseCard({ ex, log, history, deload, onChange, onSetDone }: CardPro
       <div className={`sets ${ex.noWeight ? 'no-weight' : ''}`}>
         <div className="sets-head muted small">
           <span>Set</span>
-          {!ex.noWeight && <span>kg</span>}
+          {!ex.noWeight && (
+            <button
+              className="unit-toggle"
+              aria-label={`Weight unit: ${unit}. Tap to switch to ${unit === 'kg' ? 'lb' : 'kg'}`}
+              onClick={() => onUnitChange(unit === 'kg' ? 'lb' : 'kg')}
+            >
+              {unit} ⇄
+            </button>
+          )}
           <span>{isSec ? 'sec' : 'Reps'}</span>
           <span>RPE</span>
           <span />
@@ -185,7 +219,7 @@ function ExerciseCard({ ex, log, history, deload, onChange, onSetDone }: CardPro
           <div key={i} className={`set-row ${set.done ? 'done' : ''}`}>
             <span className="set-no">{i + 1}</span>
             {!ex.noWeight && (
-              <NumInput ariaLabel={`Set ${i + 1} weight`} value={set.weight} placeholder={suggested != null ? String(suggested) : 'kg'} onChange={(v) => setField(i, { weight: v })} />
+              <NumInput ariaLabel={`Set ${i + 1} weight`} value={set.weight} placeholder={suggested != null ? String(suggested) : unit} onChange={(v) => setField(i, { weight: v })} />
             )}
             <NumInput ariaLabel={`Set ${i + 1} ${isSec ? 'seconds' : 'reps'}`} decimal={false} value={set.reps} placeholder={String(placeholderReps(i))} onChange={(v) => setField(i, { reps: v })} />
             <NumInput ariaLabel={`Set ${i + 1} RPE`} value={set.rpe} placeholder="–" onChange={(v) => setField(i, { rpe: v })} />

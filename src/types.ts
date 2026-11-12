@@ -2,6 +2,8 @@
 
 export type DayId = 'lowerA' | 'upperA' | 'lowerB' | 'upperB';
 
+export type WeightUnit = 'kg' | 'lb';
+
 export interface ExercisePlan {
   /** Stable id. History and progression are keyed by this — the same id on two days shares history. */
   id: string;
@@ -15,10 +17,12 @@ export interface ExercisePlan {
   repMax: number;
   /** 'reps' (default) or 'sec' for timed holds like planks. */
   unit?: 'reps' | 'sec';
-  /** Starting weight in kg, used until there is history. */
+  /** Starting weight (in weightUnit), used until there is history. */
   startWeight?: number;
-  /** Weight step in kg used for increases (and rounding decreases). */
+  /** Weight step (in weightUnit) used for increases and for rounding decreases. */
   increment: number;
+  /** Unit of startWeight/increment and the default logging unit. Default 'kg'. Can be overridden in Settings. */
+  weightUnit?: WeightUnit;
   /** Main compound lift — gets the longer rest timer. */
   main?: boolean;
   /** Shows the "back felt off" flag and applies the back-safety rule. */
@@ -58,6 +62,8 @@ export interface ExerciseLog {
   backFlag?: boolean;
   /** Weight that was suggested when the workout started. */
   suggestedWeight?: number | null;
+  /** Unit the set weights are logged in. Missing = 'kg'. */
+  weightUnit?: WeightUnit;
 }
 
 export interface WorkoutLog {
@@ -83,6 +89,8 @@ export interface Settings {
   restMainSec: number;
   restAccessorySec: number;
   unit: 'kg';
+  /** Per-exercise unit overrides, keyed by exercise id. */
+  exerciseUnits: Record<string, WeightUnit>;
   sound: boolean;
   vibrate: boolean;
   startBodyWeight: number;

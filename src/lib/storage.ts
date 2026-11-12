@@ -13,6 +13,7 @@ export function defaultData(): AppData {
       restMainSec: DEFAULT_REST.main,
       restAccessorySec: DEFAULT_REST.accessory,
       unit: 'kg',
+      exerciseUnits: {},
       sound: true,
       vibrate: true,
       startBodyWeight: 105,

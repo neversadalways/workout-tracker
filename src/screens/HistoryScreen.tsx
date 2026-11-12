@@ -7,6 +7,7 @@ import { formatDate } from '../lib/dates';
 import { doneSetCount, workoutVolume } from '../lib/workout';
 import { LineChart } from '../components/LineChart';
 import { setsSummary } from '../components/format';
+import { logInUnit, unitFor } from '../lib/units';
 
 type Tab = 'workouts' | 'progress' | 'back';
 
@@ -99,7 +100,12 @@ function Progress() {
       '',
   );
   const ex = findExercise(id);
-  const hist = exerciseHistory(data.workouts, id).filter((h) => completedSets(h.log).length).reverse();
+  const unit = ex ? unitFor(ex, data.settings) : 'kg';
+  // Chart everything in the exercise's current unit, whatever each session was logged in.
+  const hist = exerciseHistory(data.workouts, id)
+    .filter((h) => completedSets(h.log).length)
+    .map((h) => ({ ...h, log: logInUnit(h.log, unit) }))
+    .reverse();
 
   const weightPts = hist.flatMap((h) => {
     const w = workingWeight(h.log);
@@ -127,13 +133,14 @@ function Progress() {
           <LineChart unit={ex.unit === 'sec' ? 'sec' : 'reps'} series={[{ label: 'Best set', color: 'var(--accent)', points: repPts }]} />
         ) : (
           <LineChart
+            unit={unit}
             series={[
               { label: 'Working weight', color: 'var(--accent)', points: weightPts },
               { label: 'Est. 1RM', color: 'var(--blue)', points: e1rmPts, dashed: true },
             ]}
           />
         )}
-        {best != null && <p className="muted small center">Best estimated 1RM: <strong>{best} kg</strong> (Epley)</p>}
+        {best != null && <p className="muted small center">Best estimated 1RM: <strong>{best} {unit}</strong> (Epley)</p>}
       </section>
       {hist.length > 0 && (
         <section className="card">

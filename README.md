@@ -18,7 +18,8 @@ A mobile-first, offline-capable workout tracker for a 4-day upper/lower training
 - **Deload** – the app counts training weeks from your first workout. After 6 weeks it prompts a deload: ~60% of the sets at ~90% of the weight. You can start or skip it, or start one any time from Settings.
 - **History** – past workouts with notes, plus per-exercise charts of working weight and estimated 1RM (Epley).
 - **Body weight** – log weigh-ins and see a 7-day trend line, weekly averages and progress toward a target weight and date (default target date: 15 June 2027).
-- **Settings** – rest timer durations, sound and vibration, units, body-weight goal, deload controls, JSON export/import, and reset.
+- **kg or lb per exercise** – switch any exercise to pounds (e.g. machines labelled in lb) in *Settings → Exercise units*, or tap the `kg ⇄` header during a workout. Every session stores its own unit, so suggestions and charts convert old sessions automatically. Exercises in lb progress in lb steps (+5 lb instead of +2.5 kg, +2.5 lb instead of +1 kg).
+- **Settings** – rest timer durations, sound and vibration, per-exercise units, body-weight goal, deload controls, JSON export/import, and reset.
 - **PWA** – installable on your phone ("Add to Home Screen") and works offline.
 
 ## Run locally
@@ -46,8 +47,9 @@ Everything about the program lives in **[`src/data/plan.ts`](src/data/plan.ts)**
 | `id` | Stable key for history. Don't rename it once you have logs (or it starts fresh). Using the same id on two days shares history (e.g. Calf Raises). |
 | `name` | Display name |
 | `sets`, `repMin`, `repMax` | Target. Use the same min and max for fixed reps (e.g. 3×5). |
-| `startWeight` | Weight used until there is history |
-| `increment` | kg added when you hit the top of the range on every set |
+| `startWeight` | Weight used until there is history (in `weightUnit`) |
+| `increment` | Weight added when you hit the top of the range on every set (in `weightUnit`) |
+| `weightUnit` | `'kg'` (default) or `'lb'`, the unit of `startWeight` and `increment`. A per-exercise choice in Settings overrides it. |
 | `main` | Main lift → longer rest timer |
 | `backSafety` | Shows the "back felt off" flag |
 | `targetRpe` | Shown next to the target. If any set's logged RPE is more than 1 above it, the weight isn't increased. |

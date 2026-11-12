@@ -12,8 +12,10 @@ import type { WorkoutDay } from '../types';
  *   sets        number of working sets
  *   repMin/Max  target range (same value = fixed reps, e.g. 3x5)
  *   unit        'sec' for timed holds (default: reps)
- *   startWeight kg used before there is any history
- *   increment   kg added when you hit the top of the range in every set
+ *   startWeight weight used before there is any history (in weightUnit)
+ *   increment   weight added when you hit the top of the range in every set
+ *   weightUnit  'kg' (default) or 'lb' — can also be switched per exercise
+ *               in Settings → Exercise units, which overrides this
  *   main        true = main lift (longer rest timer)
  *   backSafety  true = shows the "back felt off" flag
  *   targetRpe   shown next to the target

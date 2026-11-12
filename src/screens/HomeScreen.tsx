@@ -4,7 +4,8 @@ import { useStore } from '../store';
 import type { DayId } from '../types';
 import { WEEKDAY_NAMES, formatDate, startOfWeek, todayStr } from '../lib/dates';
 import { dayForDate, getDay, nextWorkout } from '../lib/schedule';
-import { exerciseHistory, suggest } from '../lib/progression';
+import { exerciseHistory } from '../lib/progression';
+import { planInUnit, suggestIn, unitFor } from '../lib/units';
 import { deloadSets, deloadWeight, isDeloadDue, skipDeload, startDeload } from '../lib/deload';
 import { createWorkout } from '../lib/workout';
 import { ACTION_CLASS, ACTION_ICON, kg, targetText } from '../components/format';
@@ -99,8 +100,9 @@ export function HomeScreen({ onOpenWorkout }: { onOpenWorkout: () => void }) {
         </div>
         <ul className="plan-list">
           {day.exercises.map((ex) => {
-            const s = suggest(ex, exerciseHistory(data.workouts, ex.id));
-            const w = deloadActive ? deloadWeight(s.weight, ex.increment) : s.weight;
+            const unit = unitFor(ex, data.settings);
+            const s = suggestIn(ex, exerciseHistory(data.workouts, ex.id), unit);
+            const w = deloadActive ? deloadWeight(s.weight, planInUnit(ex, unit).increment) : s.weight;
             return (
               <li key={ex.id}>
                 <div>
@@ -109,7 +111,7 @@ export function HomeScreen({ onOpenWorkout }: { onOpenWorkout: () => void }) {
                 </div>
                 {!ex.noWeight && (
                   <div className={`sugg ${ACTION_CLASS[s.action]}`}>
-                    <span>{ACTION_ICON[s.action]}</span> {kg(w)}
+                    <span>{ACTION_ICON[s.action]}</span> {kg(w, unit)}
                   </div>
                 )}
               </li>

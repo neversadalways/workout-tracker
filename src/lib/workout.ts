@@ -1,7 +1,8 @@
 import type { AppData, WorkoutDay, WorkoutLog } from '../types';
 import { todayStr } from './dates';
 import { deloadSets, deloadWeight } from './deload';
-import { exerciseHistory, suggest } from './progression';
+import { exerciseHistory } from './progression';
+import { planInUnit, suggestIn, toKg, unitFor } from './units';
 
 export function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -18,12 +19,15 @@ export function createWorkout(day: WorkoutDay, data: AppData, opts: { deload: bo
     deload: opts.deload,
     week: opts.week,
     exercises: day.exercises.map((ex) => {
-      const s = suggest(ex, exerciseHistory(data.workouts, ex.id));
-      const weight = ex.noWeight ? null : opts.deload ? deloadWeight(s.weight, ex.increment) : s.weight;
+      const unit = unitFor(ex, data.settings);
+      const s = suggestIn(ex, exerciseHistory(data.workouts, ex.id), unit);
+      const step = planInUnit(ex, unit).increment;
+      const weight = ex.noWeight ? null : opts.deload ? deloadWeight(s.weight, step) : s.weight;
       const n = opts.deload ? deloadSets(ex.sets) : ex.sets;
       return {
         exerciseId: ex.id,
         name: ex.name,
+        weightUnit: unit,
         suggestedWeight: weight,
         backFlag: false,
         sets: Array.from({ length: n }, () => ({ weight, reps: null, rpe: null, done: false })),
@@ -32,9 +36,10 @@ export function createWorkout(day: WorkoutDay, data: AppData, opts: { deload: bo
   };
 }
 
+/** Total volume in kg (lb sets are converted). */
 export function workoutVolume(w: WorkoutLog): number {
   let v = 0;
-  for (const e of w.exercises) for (const s of e.sets) if (s.done && s.weight && s.reps) v += s.weight * s.reps;
+  for (const e of w.exercises) for (const s of e.sets) if (s.done && s.weight && s.reps) v += toKg(s.weight, e.weightUnit) * s.reps;
   return Math.round(v);
 }
 
