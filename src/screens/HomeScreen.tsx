@@ -3,7 +3,7 @@ import { PLAN } from '../data/plan';
 import { useStore } from '../store';
 import type { DayId } from '../types';
 import { WEEKDAY_NAMES, formatDate, startOfWeek, todayStr } from '../lib/dates';
-import { dayForDate, getDay, nextWorkout } from '../lib/schedule';
+import { applySchedule, dayForDate, getDay, nextWorkout } from '../lib/schedule';
 import { exerciseHistory } from '../lib/progression';
 import { planInUnit, suggestIn, unitFor } from '../lib/units';
 import { deloadSets, deloadWeight, isDeloadDue, skipDeload, startDeload } from '../lib/deload';
@@ -14,10 +14,11 @@ export function HomeScreen({ onOpenWorkout }: { onOpenWorkout: () => void }) {
   const { data, update, week, deloadActive } = useStore();
   const now = new Date();
   const today = todayStr();
-  const scheduled = dayForDate(now);
-  const next = nextWorkout(now);
+  const plan = applySchedule(PLAN, data.settings.schedule);
+  const scheduled = dayForDate(now, plan);
+  const next = nextWorkout(now, plan);
   const [picked, setPicked] = useState<DayId | null>(null);
-  const day = picked ? getDay(picked) : (scheduled ?? next.day);
+  const day = picked ? getDay(picked, plan) : (scheduled ?? next.day);
   const due = isDeloadDue(data.deload, week);
   const doneToday = data.workouts.filter((w) => w.date === today);
 
@@ -78,7 +79,7 @@ export function HomeScreen({ onOpenWorkout }: { onOpenWorkout: () => void }) {
       )}
 
       <div className="day-picker" role="tablist">
-        {PLAN.map((d) => (
+        {[...plan].sort((a, b) => a.weekday - b.weekday).map((d) => (
           <button
             key={d.id}
             role="tab"

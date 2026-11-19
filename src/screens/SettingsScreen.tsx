@@ -3,18 +3,20 @@ import { useStore } from '../store';
 import type { ExercisePlan, Settings, WeightUnit } from '../types';
 import { PLAN } from '../data/plan';
 import { unitFor } from '../lib/units';
+import { applySchedule, assignWeekday } from '../lib/schedule';
 
 /** Unique weighted exercises across the plan. */
 const exerciseList: ExercisePlan[] = [...new Map(PLAN.flatMap((d) => d.exercises).filter((e) => !e.noWeight).map((e) => [e.id, e])).values()];
 import { defaultData, exportData, parseImport } from '../lib/storage';
 import { endDeload, startDeload } from '../lib/deload';
-import { formatDate, startOfWeek, todayStr } from '../lib/dates';
+import { WEEKDAY_NAMES, formatDate, startOfWeek, todayStr } from '../lib/dates';
 import { NumInput } from '../components/NumInput';
 
 export function SettingsScreen() {
   const { data, update, replace, week, deloadActive } = useStore();
   const s = data.settings;
   const fileRef = useRef<HTMLInputElement>(null);
+  const schedule = applySchedule(PLAN, s.schedule);
   const set = (patch: Partial<Settings>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
 
   const onImport = async (file: File) => {
@@ -61,6 +63,43 @@ export function SettingsScreen() {
           <input type="checkbox" checked={s.vibrate} onChange={(e) => set({ vibrate: e.target.checked })} />
           <span>Vibrate when rest ends</span>
         </label>
+      </section>
+
+      <section className="card">
+        <h3>Training days</h3>
+        <p className="muted small">Choose the weekday for each workout. Picking a day another workout already uses swaps the two.</p>
+        {schedule.map((d) => (
+          <label key={d.id} className="detail-row unit-row">
+            <span>
+              <strong>{d.name}</strong>
+              {d.weekday !== PLAN.find((p) => p.id === d.id)?.weekday && <span className="badge">changed</span>}
+            </span>
+            <select
+              className="day-select"
+              value={d.weekday}
+              aria-label={`${d.name} weekday`}
+              onChange={(e) => set({ schedule: assignWeekday(PLAN, s.schedule, d.id, Number(e.target.value)) })}
+            >
+              {WEEKDAY_NAMES.map((name, i) => {
+                const taken = schedule.find((o) => o.weekday === i && o.id !== d.id);
+                return (
+                  <option key={i} value={i}>
+                    {name}
+                    {taken ? ` (swap with ${taken.name})` : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+        ))}
+        <p className="muted small">
+          Rest days: {WEEKDAY_NAMES.filter((_, i) => !schedule.some((d) => d.weekday === i)).join(', ')}
+        </p>
+        {schedule.some((d) => d.weekday !== PLAN.find((p) => p.id === d.id)?.weekday) && (
+          <button className="btn small ghost" onClick={() => set({ schedule: {} })}>
+            Reset to plan defaults
+          </button>
+        )}
       </section>
 
       <section className="card">

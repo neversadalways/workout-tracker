@@ -19,7 +19,7 @@ A mobile-first, offline-capable workout tracker for a 4-day upper/lower training
 - **History** – past workouts with notes, plus per-exercise charts of working weight and estimated 1RM (Epley).
 - **Body weight** – log weigh-ins and see a 7-day trend line, weekly averages and progress toward a target weight and date (default target date: 15 June 2027).
 - **kg or lb per exercise** – switch any exercise to pounds (e.g. machines labelled in lb) in *Settings → Exercise units*, or tap the `kg ⇄` header during a workout. Every session stores its own unit, so suggestions and charts convert old sessions automatically. Exercises in lb progress in lb steps (+5 lb instead of +2.5 kg, +2.5 lb instead of +1 kg).
-- **Settings** – rest timer durations, sound and vibration, per-exercise units, body-weight goal, deload controls, JSON export/import, and reset.
+- **Settings** – training days (move any workout to another weekday), rest timer durations, sound and vibration, per-exercise units, body-weight goal, deload controls, JSON export/import, and reset.
 - **PWA** – installable on your phone ("Add to Home Screen") and works offline.
 
 ## Run locally
@@ -56,7 +56,7 @@ Everything about the program lives in **[`src/data/plan.ts`](src/data/plan.ts)**
 | `unit: 'sec'`, `noWeight` | For timed / bodyweight exercises such as planks |
 | `restSec` | Per-exercise rest override |
 
-To move a workout to another day, change its `weekday` (0 = Sunday … 6 = Saturday). Deload frequency and size live in the `DELOAD` constant in the same file. Push to `main` and the site redeploys automatically.
+To move a workout to another day, use **Settings → Training days** in the app (picking a day another workout already uses swaps the two), or change the default `weekday` here (0 = Sunday … 6 = Saturday). Deload frequency and size live in the `DELOAD` constant in the same file. Push to `main` and the site redeploys automatically.
 
 ## Backups
 

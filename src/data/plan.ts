@@ -22,7 +22,8 @@ import type { WorkoutDay } from '../types';
  *   noWeight    true = bodyweight / no load field
  *   restSec     override rest time for this exercise only
  *
- * weekday: 0 = Sunday, 1 = Monday, … 6 = Saturday
+ * weekday: 0 = Sunday, 1 = Monday, … 6 = Saturday (default — can be changed
+ *          in the app under Settings → Training days)
  */
 export const PLAN: WorkoutDay[] = [
   {

@@ -91,6 +91,8 @@ export interface Settings {
   unit: 'kg';
   /** Per-exercise unit overrides, keyed by exercise id. */
   exerciseUnits: Record<string, WeightUnit>;
+  /** Weekday overrides per workout (0 = Sunday … 6 = Saturday). Missing = plan default. */
+  schedule: Partial<Record<DayId, number>>;
   sound: boolean;
   vibrate: boolean;
   startBodyWeight: number;
